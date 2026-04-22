@@ -86,8 +86,6 @@ body,
 }
 
 body {
-  margin: 0;
-  padding: 0;
   color: #666;
   font-family: var(--font-sans);
   background-color: #f4f4f4;
