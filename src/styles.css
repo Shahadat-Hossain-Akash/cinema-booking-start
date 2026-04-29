@@ -1,10 +1,9 @@
-
-@import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap");
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap');
+@import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Google Sans Flex";
+  --font-sans: 'Google Sans Flex';
 }
 
 :root {
@@ -29,7 +28,7 @@
   --hero-b: rgba(47, 106, 74, 0.2);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
@@ -52,7 +51,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     --sea-ink: #d7ece8;
     --sea-ink-soft: #afcdc8;
     --lagoon: #60d7cf;
@@ -88,7 +87,24 @@ body,
 body {
   color: #666;
   font-family: var(--font-sans);
-  background-color: #f4f4f4;
+  background-color: #fafafa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .movie-list {
+    @apply flex gap-2;
+  }
+  .movie-card {
+    @apply p-4 bg-[#f4f4f4] rounded-xl w-sm flex flex-col gap-2 cursor-pointer;
+  }
+
+  .movie-card:hover {
+    @apply bg-[#f4f4f4]/80;
+  }
+
+  .legend {
+    @apply flex gap-4 items-center justify-center p-4;
+  }
 }
