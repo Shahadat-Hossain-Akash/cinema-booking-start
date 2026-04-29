@@ -94,7 +94,7 @@ body {
 
 @layer components {
   .movie-list {
-    @apply flex gap-2;
+    @apply flex gap-2 px-4;
   }
   .movie-card {
     @apply p-4 bg-[#f4f4f4] rounded-xl w-sm flex flex-col gap-2 cursor-pointer;

@@ -7,6 +7,9 @@ function MovieListComponent({
   movies: Movie[]
   setSelectedMovie: (movie: Movie) => void
 }) {
+  function handleMovieClick(movie: Movie) {
+    setSelectedMovie(movie)
+  }
   return (
     <div className="movie-list">
       {movies.length === 0 ? (
@@ -16,7 +19,7 @@ function MovieListComponent({
           <MovieCard
             key={item.name}
             {...item}
-            onClick={() => setSelectedMovie(item)}
+            onClick={() => handleMovieClick(item)}
           />
         ))
       )}

@@ -3,11 +3,13 @@ import {
   Link,
   Outlet,
   Scripts,
-  createRootRoute,
+  createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import Header from '@/components/Header'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import type { QueryClient } from '@tanstack/react-query'
 
 import appCss from '../styles.css?url'
 
@@ -35,7 +37,9 @@ function NotFoundComponent() {
   )
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient
+}>()({
   head: () => ({
     meta: [
       {
@@ -67,7 +71,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-sans antialiased px-4">
+      <body className="font-sans antialiased">
         <Header />
         {children}
         <TanStackDevtools
@@ -81,6 +85,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
+        <ReactQueryDevtools buttonPosition="bottom-left" />
         <Scripts />
       </body>
     </html>

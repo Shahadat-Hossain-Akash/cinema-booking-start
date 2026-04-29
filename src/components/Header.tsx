@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 backdrop-blur-lg px-4">
       <nav className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-3 sm:py-4">
         <h2 className="m-0 shrink-0 font-semibold tracking-tight ">
           <Link
