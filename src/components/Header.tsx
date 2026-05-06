@@ -1,6 +1,8 @@
+import { Route } from '#/routes/__root'
 import { Link } from '@tanstack/react-router'
 
 export default function Header() {
+  const session_id = Route.useLoaderData()
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg px-4">
       <nav className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-3 sm:py-4">
@@ -13,13 +15,13 @@ export default function Header() {
           </Link>
         </h2>
 
-        <div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-base font-semibold sm:order-2 sm:w-auto sm:flex-nowrap sm:pb-0">
+        <div className="order-3 break-all flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-base font-semibold sm:order-2 sm:w-auto sm:flex-nowrap sm:pb-0">
           <Link
             to="/"
             className="nav-link"
             activeProps={{ className: 'nav-link is-active' }}
           >
-            User
+            User {session_id}
           </Link>
         </div>
       </nav>

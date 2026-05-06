@@ -1,14 +1,15 @@
 const MovieCard = ({
-  name,
+  id,
+  title,
   rows,
-  columns,
+  seats_per_row,
   onClick,
 }: Movie & { onClick: () => void }) => {
   return (
     <section className="movie-card" onClick={onClick}>
-      <h2 className="text-2xl">{name}</h2>
+      <h2 className="text-2xl">{title}</h2>
       <div className="flex flex-col">
-        <span>Rows: {rows}</span> <span>Columns: {columns}</span>
+        <span>Rows: {rows}</span> <span>Columns: {seats_per_row}</span>
       </div>
     </section>
   )

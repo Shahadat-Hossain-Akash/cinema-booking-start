@@ -2,11 +2,13 @@ import Legend from './Legend'
 import { rowLabel } from '#/utils/rowLetter'
 import Seat from './Seat'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { getSeatsBookings } from '#/server-fns/movies.functions'
 
 const MovieSeat = ({ movie }: { movie: Movie }) => {
-  const { columns, rows } = movie
+  const { seats_per_row, rows, id } = movie
   const seats: SeatStatus[][] = Array.from({ length: rows }, () =>
-    Array.from({ length: columns }, () => 'available'),
+    Array.from({ length: seats_per_row }, () => 'available'),
   )
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(
     () => new Set<string>(),
@@ -25,6 +27,13 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
     })
   }
 
+  const { data } = useQuery({
+    queryKey: ['seats', id],
+    queryFn: () => getSeatsBookings({
+      data: id
+    }),
+  })
+
   return (
     <div className="flex flex-col items-center gap-4 min-w-lg overflow-x-auto px-8">
       <div className="flex flex-col gap-1.5 sm:gap-2 ">
@@ -35,7 +44,7 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
             className="flex h-10 w-10 items-center justify-center sm:h-12 sm:w-12"
             aria-hidden
           />
-          {Array.from({ length: columns }).map((_, col) => (
+          {Array.from({ length: seats_per_row }).map((_, col) => (
             <div
               key={`col-header-${col}`}
               className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f4f4f4] text-xs font-medium sm:h-12 sm:w-12"

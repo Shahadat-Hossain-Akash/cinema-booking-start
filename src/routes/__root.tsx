@@ -12,6 +12,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
 import appCss from '../styles.css?url'
+import { ensureSession } from '#/server-fns/session.functions'
+import { DefaultCatchBoundary } from '#/components/DefaultCatchBoundary'
 
 function NotFoundComponent() {
   return (
@@ -63,6 +65,14 @@ export const Route = createRootRouteWithContext<{
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
+  loader: () => ensureSession(),
+  errorComponent: (props) => {
+    return (
+      <RootShell>
+        <DefaultCatchBoundary {...props} />
+      </RootShell>
+    )
+  },
 })
 
 function RootShell({ children }: { children: React.ReactNode }) {

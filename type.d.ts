@@ -1,6 +1,9 @@
 interface Movie {
-  name: string
+  id: string
+  title: string
   rows: number
-  columns: number
+  seats_per_row: number
+  total_seats: number
+
 }
 type SeatStatus = 'available' | 'held-by-me' | 'others-hold' | 'booked'
