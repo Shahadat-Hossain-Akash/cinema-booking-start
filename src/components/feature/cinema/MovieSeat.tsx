@@ -1,7 +1,8 @@
 import Legend from './Legend'
 import { rowLabel } from '#/utils/rowLetter'
 import Seat from './Seat'
-import { useState } from 'react'
+import CountDownTimer from './CountDownTimer'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   deleteSeatBooking,
@@ -9,12 +10,9 @@ import {
   postSeatBooking,
   putSeatConfirm,
 } from '#/server-fns/movies.functions'
-import {
-  Modal,
-  useMinimizableModal
-
-} from '#/components/common/modal'
-import type { ModalAction } from '#/components/common/modal';
+import { Modal, useMinimizableModal } from '#/components/common/modal'
+import type { ModalAction } from '#/components/common/modal'
+import { useCountdownTimer } from '#/common/hooks/useCountdownTimer'
 
 const MovieSeat = ({ movie }: { movie: Movie }) => {
   const { seats_per_row, rows, id } = movie
@@ -30,7 +28,7 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
   const handleSeatClick = (seat: string) => {
     if (selectedSeats.has(seat)) {
       modal.open()
-      return;
+      return
     } else {
       deleteSeatBooked(bookSeatResponse?.session_id)
     }
@@ -87,19 +85,31 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
       }),
   })
 
+  const { remainingSeconds, clearTimer, isExpired } = useCountdownTimer(
+    bookSeatResponse?.expires_at,
+  )
+
+  useEffect(() => {
+    if (isExpired && modal.isOpen && bookSeatResponse?.session_id) {
+      modal.close()
+    }
+  }, [isExpired])
+
   const ModalActions: ModalAction[] = [
     {
-      label: 'Cancel Booking',
+      label: 'No, cancel',
       onClick: () => {
         deleteSeatBooked(bookSeatResponse?.session_id)
+        clearTimer()
         modal.close()
       },
       variant: 'danger',
     },
     {
-      label: 'Confirm Booking',
+      label: 'Yes, Confirm',
       onClick: () => {
         confirmSeatBooking(bookSeatResponse?.session_id)
+        clearTimer()
         modal.close()
       },
       variant: 'primary',
@@ -168,7 +178,29 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
         backdrop
         actions={ModalActions}
       >
-        <p>Modal body content goes here.</p>
+
+        {bookSeatResponse?.expires_at && (
+          <CountDownTimer
+            expiresAt={bookSeatResponse.expires_at}
+            onExpire={clearTimer}
+          />
+        )}
+
+        {selectedSeats.size > 1 ? (
+          <>
+            <p className="text-center">
+              Are you sure to book these seats{' '}
+              <strong>{Array.from(selectedSeats)}</strong> ?
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-center">
+              Are you sure to book this seat{' '}
+              <strong>{Array.from(selectedSeats)}</strong> ?
+            </p>
+          </>
+        )}
       </Modal>
     </div>
   )
