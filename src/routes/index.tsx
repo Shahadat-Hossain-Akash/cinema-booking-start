@@ -21,18 +21,21 @@ export const Route = createFileRoute('/')({
   ),
   errorComponent: ({ error }) => {
     return <ErrorComponent error={error} />
-  }
+  },
 })
 
 function App() {
   const movies = Route.useLoaderData()
   const [movie, setMovies] = useState<Movie | null>(null)
+
   return (
     <main className="min-h-screen mt-4">
       <MovieList movies={movies} setSelectedMovie={setMovies} />
 
-      <Screen />
-      {movie && <MovieSeat key={movie.title} movie={movie} />}
+      <div>
+        <Screen />
+        {movie && <MovieSeat key={movie.title} movie={movie} />}
+      </div>
     </main>
   )
 }

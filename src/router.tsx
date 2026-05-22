@@ -13,7 +13,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
-    defaultErrorComponent: DefaultCatchBoundary
+    defaultErrorComponent: DefaultCatchBoundary,
   })
 
   setupRouterSsrQueryIntegration({
