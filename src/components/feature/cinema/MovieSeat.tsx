@@ -2,7 +2,7 @@ import Legend from './Legend'
 import { rowLabel } from '#/utils/rowLetter'
 import Seat from './Seat'
 import CountDownTimer from './CountDownTimer'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   deleteSeatBooking,
@@ -13,44 +13,54 @@ import {
 import { Modal, useMinimizableModal } from '#/components/common/modal'
 import type { ModalAction } from '#/components/common/modal'
 import { useCountdownTimer } from '#/common/hooks/useCountdownTimer'
+import { useBookingSessions } from '#/common/hooks/useBookingSessionStore'
 
 const MovieSeat = ({ movie }: { movie: Movie }) => {
   const { seats_per_row, rows, id } = movie
   const seats: SeatStatus[][] = Array.from({ length: rows }, () =>
     Array.from({ length: seats_per_row }, () => 'available'),
   )
-  const [selectedSeats, setSelectedSeats] = useState<Set<string>>(
-    () => new Set<string>(),
-  )
 
   const modal = useMinimizableModal()
 
-  const handleSeatClick = (seat: string) => {
-    if (selectedSeats.has(seat)) {
-      modal.open()
-      return
-    } else {
-      deleteSeatBooked(bookSeatResponse?.session_id)
-    }
-    setSelectedSeats((prev) => {
-      const next = new Set(prev)
-      if (next.has(seat)) {
-        next.delete(seat)
-      } else {
-        if (next.size === 1) {
-          next.clear()
-        }
-        next.add(seat)
-      }
-      return next
-    })
+  const {
+    getMovieSessions,
+    getSeatSession,
+    addSession,
+    removeSession,
+    clearMovieSessions,
+    getEarliestExpiry,
+  } = useBookingSessions()
 
-    // Trigger the mutation to hold the seat
-    bookSeat(seat)
-    modal.open()
+  const activeSessions = useMemo(
+    () => getMovieSessions(id),
+    [getMovieSessions, id],
+  )
+
+  const selectedSeats = useMemo(
+    () => new Set(activeSessions.map((s) => s.seat_id)),
+    [activeSessions],
+  )
+
+  const { data, refetch } = useQuery({
+    queryKey: ['seats', id],
+    queryFn: () => getSeatsBookings({ data: id }),
+    refetchInterval: 2000,
+  })
+
+  const handleSeatClick = (seat: string) => {
+    const existingSession = getSeatSession(id, seat)
+    if (existingSession) {
+      // Releasing / Canceling this specific seat hold
+      deleteSeatBooked(existingSession.session_id)
+      removeSession(id, seat)
+    } else {
+      // Hold / Book this seat
+      bookSeat(seat)
+    }
   }
 
-  const { mutate: bookSeat, data: bookSeatResponse } = useMutation({
+  const { mutate: bookSeat } = useMutation({
     mutationKey: ['seats', id],
     mutationFn: (seatId: string) =>
       postSeatBooking({
@@ -59,14 +69,16 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
           seatId: seatId,
         },
       }),
-  })
-
-  const { data } = useQuery({
-    queryKey: ['seats', id],
-    queryFn: () =>
-      getSeatsBookings({
-        data: id,
-      }),
+    onSuccess: (res, seatId) => {
+      if (res?.session_id && res?.expires_at) {
+        addSession(id, {
+          seat_id: seatId,
+          session_id: res.session_id,
+          expires_at: res.expires_at,
+        })
+        refetch()
+      }
+    },
   })
 
   const { mutate: confirmSeatBooking } = useMutation({
@@ -75,6 +87,9 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
       putSeatConfirm({
         data: sessionID,
       }),
+    onSuccess: () => {
+      refetch()
+    },
   })
 
   const { mutate: deleteSeatBooked } = useMutation({
@@ -83,23 +98,34 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
       deleteSeatBooking({
         data: sessionID,
       }),
+    onSuccess: () => {
+      refetch()
+    },
   })
 
-  const { remainingSeconds, clearTimer, isExpired } = useCountdownTimer(
-    bookSeatResponse?.expires_at,
-  )
+  const earliestExpiry = getEarliestExpiry(id)
+  const { remainingSeconds, clearTimer, isExpired } =
+    useCountdownTimer(earliestExpiry)
 
   useEffect(() => {
-    if (isExpired && modal.isOpen && bookSeatResponse?.session_id) {
+    if (isExpired && activeSessions.length > 0) {
+      // Cancel all booking sessions for this movie on expiry
+      activeSessions.forEach((session) => {
+        deleteSeatBooked(session.session_id)
+      })
+      clearMovieSessions(id)
       modal.close()
     }
-  }, [isExpired])
+  }, [isExpired, activeSessions, id])
 
   const ModalActions: ModalAction[] = [
     {
       label: 'No, cancel',
       onClick: () => {
-        deleteSeatBooked(bookSeatResponse?.session_id)
+        activeSessions.forEach((session) => {
+          deleteSeatBooked(session.session_id)
+        })
+        clearMovieSessions(id)
         clearTimer()
         modal.close()
       },
@@ -108,7 +134,10 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
     {
       label: 'Yes, Confirm',
       onClick: () => {
-        confirmSeatBooking(bookSeatResponse?.session_id)
+        activeSessions.forEach((session) => {
+          confirmSeatBooking(session.session_id)
+        })
+        clearMovieSessions(id)
         clearTimer()
         modal.close()
       },
@@ -116,10 +145,8 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
     },
   ]
 
-  console.log({ data, bookSeatResponse })
-
   return (
-    <div className="flex flex-col items-center gap-4 min-w-lg overflow-x-auto px-8">
+    <div className="flex flex-col items-center gap-4 min-w-lg overflow-x-auto px-8 pb-8">
       <div className="flex flex-col gap-1.5 sm:gap-2 ">
         {/* Column numbers header */}
         <div className="flex items-center gap-2 sm:gap-2">
@@ -166,6 +193,17 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
 
       <Legend />
 
+      {activeSessions.length > 0 && (
+        <button
+          type="button"
+          onClick={() => modal.open()}
+          className="mt-4 px-8 py-3 bg-[#4DC80B] hover:bg-[#43b00a] text-white font-semibold rounded-lg shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-2"
+        >
+          Book {activeSessions.length} Seat
+          {activeSessions.length > 1 ? 's' : ''} Now
+        </button>
+      )}
+
       <Modal
         isOpen={modal.isOpen}
         onClose={modal.close}
@@ -178,26 +216,22 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
         backdrop
         actions={ModalActions}
       >
-
-        {bookSeatResponse?.expires_at && (
-          <CountDownTimer
-            expiresAt={bookSeatResponse.expires_at}
-            onExpire={clearTimer}
-          />
+        {earliestExpiry && (
+          <CountDownTimer expiresAt={earliestExpiry} onExpire={clearTimer} />
         )}
 
         {selectedSeats.size > 1 ? (
           <>
             <p className="text-center">
               Are you sure to book these seats{' '}
-              <strong>{Array.from(selectedSeats)}</strong> ?
+              <strong>{Array.from(selectedSeats).join(', ')}</strong> ?
             </p>
           </>
         ) : (
           <>
             <p className="text-center">
               Are you sure to book this seat{' '}
-              <strong>{Array.from(selectedSeats)}</strong> ?
+              <strong>{Array.from(selectedSeats)[0]}</strong> ?
             </p>
           </>
         )}

@@ -1,5 +1,6 @@
 import { getSessionId } from '#/server-fns/session.functions'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 const SEAT_COLORS: Record<SeatStatus, string> = {
   available: '#c8c8c8',
@@ -62,13 +63,15 @@ const Seat = ({
 }: SeatProps) => {
   const { data: sessionId } = useSessionId()
 
-  const { currentStatus, isDisabled } = resolveSeatStatus(
-    title,
-    status,
-    bookedSeats,
-    selectedSeats,
-    sessionId,
-  )
+  const { currentStatus, isDisabled } = useMemo(() => {
+    return resolveSeatStatus(
+      title,
+      status,
+      bookedSeats,
+      selectedSeats,
+      sessionId,
+    )
+  }, [title, status, bookedSeats, selectedSeats, sessionId])
 
   return (
     <button

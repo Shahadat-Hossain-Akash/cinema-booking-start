@@ -14,6 +14,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import appCss from '../styles.css?url'
 import { ensureSession } from '#/server-fns/session.functions'
 import { DefaultCatchBoundary } from '#/components/DefaultCatchBoundary'
+import { BookingSessionProvider } from '#/common/hooks/useBookingSessionStore'
 
 function NotFoundComponent() {
   return (
@@ -103,5 +104,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />
+  return (
+    <BookingSessionProvider>
+      <Outlet />
+    </BookingSessionProvider>
+  )
 }
