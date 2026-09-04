@@ -6,9 +6,10 @@ export function useSeatSSE(movieId: string) {
   const eventSourceRef = useRef<EventSource | null>(null)
 
   useEffect(() => {
-    const url = `/movies/${movieId}/seat/events`
+    const hostname = import.meta.env.VITE_BASE_URL
+    const pathname = `/movies/${movieId}/seat/events`
 
-    const eventSource = new EventSource(url)
+    const eventSource = new EventSource(`${hostname}${pathname}`, { withCredentials: true })
     eventSourceRef.current = eventSource
 
     const invalidate = () => {
