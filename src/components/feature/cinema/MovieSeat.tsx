@@ -14,6 +14,7 @@ import { Modal, useMinimizableModal } from '#/components/common/modal'
 import type { ModalAction } from '#/components/common/modal'
 import { useCountdownTimer } from '#/common/hooks/useCountdownTimer'
 import { useBookingSessions } from '#/common/hooks/useBookingSessionStore'
+import { useSeatSSE } from '#/common/hooks/useSeatSSE'
 
 const MovieSeat = ({ movie }: { movie: Movie }) => {
   const { seats_per_row, rows, id } = movie
@@ -42,10 +43,12 @@ const MovieSeat = ({ movie }: { movie: Movie }) => {
     [activeSessions],
   )
 
+  // SSE: real-time updates push-invalidate this query
+  useSeatSSE(id)
+
   const { data, refetch } = useQuery({
     queryKey: ['seats', id],
     queryFn: () => getSeatsBookings({ data: id }),
-    refetchInterval: 2000,
   })
 
   const handleSeatClick = (seat: string) => {
